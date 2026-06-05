@@ -11,10 +11,10 @@ Helpful Armorers is a Fabric mod for Minecraft 1.21.1 that lets armorer villager
 ## Requirements
 
 - Minecraft 1.21.1
-- Fabric Loader 0.19.3 or newer
+- Fabric Loader
 - Fabric API
 - Java 21
 
 ## License
 
-This project is licensed under CC0-1.0.
+This project is licensed under the MIT License.

@@ -10,7 +10,7 @@
 	"contact": {
 		"sources": "https://github.com/thiagotellescontato-hue/helpful-armorers"
 	},
-	"license": "CC0-1.0",
+	"license": "MIT",
 	"icon": "assets/helpfularmorers/icon.png",
 	"environment": "*",
 	"entrypoints": {
