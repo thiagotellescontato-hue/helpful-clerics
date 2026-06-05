@@ -2,7 +2,7 @@
 
 Helpful Armorers is a Minecraft Fabric mod that gives armorer villagers a new useful behavior: they can repair damaged iron golems.
 
-When an armorer finds a nearby injured iron golem, it will approach the golem while holding an iron ingot and repair it. Armorers are careful, though - they will avoid repairing during dangerous situations, at night, or after taking damage.
+When an armorer finds a nearby injured iron golem, it will approach the golem while holding an iron ingot and repair it. Armorers are careful, though — they will avoid repairing during dangerous situations, at night, or after taking damage.
 
 ## Preview
 
@@ -40,3 +40,7 @@ Need help, found a bug, or want to suggest something?
 Join the Discord support forum:
 
 https://discord.gg/pcKQSDgTzh
+
+## License
+
+This project is licensed under the MIT License.
