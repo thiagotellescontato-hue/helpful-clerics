@@ -4,9 +4,7 @@
 	"version": "${version}",
 	"name": "Helpful Armorers",
 	"description": "Armorers help repair damaged iron golems when it is safe to do so.",
-	"authors": [
-		"Thiago"
-	],
+	"authors": ["Thiago"],
 	"contact": {
 		"sources": "https://github.com/thiagotellescontato-hue/helpful-armorers"
 	},
@@ -14,20 +12,13 @@
 	"icon": "assets/helpfularmorers/icon.png",
 	"environment": "*",
 	"entrypoints": {
-		"main": [
-			"net.thbtt.helpfularmorers.HelpfulArmorers"
-		],
-		"fabric-datagen": [
-			"net.thbtt.helpfularmorers.HelpfulArmorersDataGenerator"
-		]
+		"main": ["net.thbtt.helpfularmorers.HelpfulArmorers"]
 	},
-	"mixins": [
-		"helpfularmorers.mixins.json"
-	],
+	"mixins": ["helpfularmorers.mixins.json"],
 	"depends": {
 		"fabricloader": "*",
 		"minecraft": "${minecraft_version}",
-		"java": ">=${java_version}",
+		"java": ">=25",
 		"fabric-api": "*"
 	}
 }

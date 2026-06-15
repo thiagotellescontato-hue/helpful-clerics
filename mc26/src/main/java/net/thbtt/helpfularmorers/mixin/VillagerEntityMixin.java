@@ -1,17 +1,5 @@
 package net.thbtt.helpfularmorers.mixin;
 
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.mob.HostileEntity;
-import net.minecraft.entity.passive.IronGolemEntity;
-import net.minecraft.entity.passive.VillagerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -22,8 +10,20 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.animal.golem.IronGolem;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.phys.Vec3;
 
-@Mixin(VillagerEntity.class)
+@Mixin(Villager.class)
 public abstract class VillagerEntityMixin {
     @Unique private static final double HA_SEARCH_RADIUS = 16.0D;
     @Unique private static final double HA_DANGER_RADIUS = 10.0D;
@@ -42,11 +42,11 @@ public abstract class VillagerEntityMixin {
     @Unique private boolean ha$holdingIronIngot = false;
     @Unique private UUID ha$targetGolemUuid = null;
 
-    @Inject(method = "mobTick", at = @At("TAIL"))
+    @Inject(method = "customServerAiStep", at = @At("TAIL"))
     private void helpfulArmorers$tickGolemRepair(CallbackInfo ci) {
-        VillagerEntity armorer = (VillagerEntity) (Object) this;
+        Villager armorer = (Villager) (Object) this;
 
-        ServerWorld world = WorldCompat.getServerWorld(armorer);
+        ServerLevel world = WorldCompat.getServerWorld(armorer);
         if (world == null) {
             return;
         }
@@ -100,7 +100,7 @@ public abstract class VillagerEntityMixin {
             return;
         }
 
-        IronGolemEntity golem = ha$getCurrentTarget(world);
+        IronGolem golem = ha$getCurrentTarget(world);
 
         if (golem == null || !ha$isValidGolemTarget(golem)) {
             golem = ha$findNearestDamagedGolem(world, armorer);
@@ -110,7 +110,7 @@ public abstract class VillagerEntityMixin {
                 return;
             }
 
-            ha$targetGolemUuid = golem.getUuid();
+            ha$targetGolemUuid = golem.getUUID();
         }
 
         if (golem.getTarget() != null) {
@@ -118,29 +118,29 @@ public abstract class VillagerEntityMixin {
             return;
         }
 
-        double distanceSq = armorer.squaredDistanceTo(golem);
+        double distanceSq = armorer.distanceToSqr(golem);
         double repairDistanceSq = HA_REPAIR_DISTANCE * HA_REPAIR_DISTANCE;
 
         ha$holdIronIngot(armorer);
 
         if (distanceSq > repairDistanceSq) {
-            armorer.getNavigation().startMovingTo(golem, 0.65D);
-            armorer.getLookControl().lookAt(golem, 30.0F, 30.0F);
+            armorer.getNavigation().moveTo(golem, 0.65D);
+            armorer.getLookControl().setLookAt(golem, 30.0F, 30.0F);
             return;
         }
 
         armorer.getNavigation().stop();
-        armorer.getLookControl().lookAt(golem, 30.0F, 30.0F);
+        armorer.getLookControl().setLookAt(golem, 30.0F, 30.0F);
 
         if (ha$repairCooldown <= 0) {
             golem.heal(HA_REPAIR_AMOUNT);
-            armorer.swingHand(Hand.MAIN_HAND);
+            armorer.swing(InteractionHand.MAIN_HAND);
 
             world.playSound(
                     null,
-                    golem.getBlockPos(),
-                    SoundEvents.ENTITY_IRON_GOLEM_REPAIR,
-                    SoundCategory.NEUTRAL,
+                    golem.blockPosition(),
+                    SoundEvents.IRON_GOLEM_REPAIR,
+                    SoundSource.NEUTRAL,
                     1.0F,
                     1.0F
             );
@@ -154,17 +154,17 @@ public abstract class VillagerEntityMixin {
     }
 
     @Unique
-    private boolean ha$isArmorer(VillagerEntity villager) {
+    private boolean ha$isArmorer(Villager villager) {
         return ProfessionCompat.isArmorer(villager);
     }
 
     @Unique
-    private boolean ha$isRestTime(ServerWorld world) {
-        return world.isNight();
+    private boolean ha$isRestTime(ServerLevel world) {
+        return world.isDarkOutside();
     }
 
     @Unique
-    private void ha$updateDangerState(ServerWorld world, VillagerEntity armorer) {
+    private void ha$updateDangerState(ServerLevel world, Villager armorer) {
         if (ha$dangerCooldown > 0) {
             ha$dangerCooldown--;
             return;
@@ -172,9 +172,9 @@ public abstract class VillagerEntityMixin {
 
         ha$dangerCooldown = 10;
 
-        List<HostileEntity> hostiles = world.getEntitiesByClass(
-                HostileEntity.class,
-                armorer.getBoundingBox().expand(HA_DANGER_RADIUS),
+        List<Monster> hostiles = world.getEntitiesOfClass(
+                Monster.class,
+                armorer.getBoundingBox().inflate(HA_DANGER_RADIUS),
                 hostile -> hostile.isAlive() && !hostile.isRemoved()
         );
 
@@ -182,24 +182,24 @@ public abstract class VillagerEntityMixin {
     }
 
     @Unique
-    private void ha$fleeFromDanger(ServerWorld world, VillagerEntity armorer) {
+    private void ha$fleeFromDanger(ServerLevel world, Villager armorer) {
         LivingEntity threat = ha$findNearestThreat(world, armorer);
-        Vec3d away;
+        Vec3 away;
 
         if (threat != null) {
-            away = new Vec3d(
+            away = new Vec3(
                     armorer.getX() - threat.getX(),
                     0.0D,
                     armorer.getZ() - threat.getZ()
             );
         } else {
             double angle = armorer.getRandom().nextDouble() * Math.PI * 2.0D;
-            away = new Vec3d(Math.cos(angle), 0.0D, Math.sin(angle));
+            away = new Vec3(Math.cos(angle), 0.0D, Math.sin(angle));
         }
 
-        if (away.lengthSquared() < 0.0001D) {
+        if (away.lengthSqr() < 0.0001D) {
             double angle = armorer.getRandom().nextDouble() * Math.PI * 2.0D;
-            away = new Vec3d(Math.cos(angle), 0.0D, Math.sin(angle));
+            away = new Vec3(Math.cos(angle), 0.0D, Math.sin(angle));
         }
 
         away = away.normalize();
@@ -208,37 +208,37 @@ public abstract class VillagerEntityMixin {
         double targetY = armorer.getY();
         double targetZ = armorer.getZ() + away.z * HA_FLEE_DISTANCE;
 
-        armorer.getNavigation().startMovingTo(targetX, targetY, targetZ, 0.8D);
+        armorer.getNavigation().moveTo(targetX, targetY, targetZ, 0.8D);
     }
 
     @Unique
     @Nullable
-    private LivingEntity ha$findNearestThreat(ServerWorld world, VillagerEntity armorer) {
-        LivingEntity attacker = armorer.getAttacker();
+    private LivingEntity ha$findNearestThreat(ServerLevel world, Villager armorer) {
+        LivingEntity attacker = armorer.getLastHurtByMob();
 
         if (attacker != null && attacker.isAlive() && !attacker.isRemoved()) {
             return attacker;
         }
 
-        List<HostileEntity> hostiles = world.getEntitiesByClass(
-                HostileEntity.class,
-                armorer.getBoundingBox().expand(HA_DANGER_RADIUS),
+        List<Monster> hostiles = world.getEntitiesOfClass(
+                Monster.class,
+                armorer.getBoundingBox().inflate(HA_DANGER_RADIUS),
                 hostile -> hostile.isAlive() && !hostile.isRemoved()
         );
 
         return hostiles.stream()
-                .min(Comparator.comparingDouble(armorer::squaredDistanceTo))
+                .min(Comparator.comparingDouble(armorer::distanceToSqr))
                 .orElse(null);
     }
 
     @Unique
     @Nullable
-    private IronGolemEntity ha$getCurrentTarget(ServerWorld world) {
+    private IronGolem ha$getCurrentTarget(ServerLevel world) {
         if (ha$targetGolemUuid == null) {
             return null;
         }
 
-        if (world.getEntity(ha$targetGolemUuid) instanceof IronGolemEntity golem) {
+        if (world.getEntity(ha$targetGolemUuid) instanceof IronGolem golem) {
             return golem;
         }
 
@@ -247,7 +247,7 @@ public abstract class VillagerEntityMixin {
 
     @Unique
     @Nullable
-    private IronGolemEntity ha$findNearestDamagedGolem(ServerWorld world, VillagerEntity armorer) {
+    private IronGolem ha$findNearestDamagedGolem(ServerLevel world, Villager armorer) {
         if (ha$scanCooldown > 0) {
             ha$scanCooldown--;
             return null;
@@ -255,19 +255,19 @@ public abstract class VillagerEntityMixin {
 
         ha$scanCooldown = 20 + armorer.getRandom().nextInt(20);
 
-        List<IronGolemEntity> golems = world.getEntitiesByClass(
-                IronGolemEntity.class,
-                armorer.getBoundingBox().expand(HA_SEARCH_RADIUS),
+        List<IronGolem> golems = world.getEntitiesOfClass(
+                IronGolem.class,
+                armorer.getBoundingBox().inflate(HA_SEARCH_RADIUS),
                 this::ha$isValidGolemTarget
         );
 
         return golems.stream()
-                .min(Comparator.comparingDouble(armorer::squaredDistanceTo))
+                .min(Comparator.comparingDouble(armorer::distanceToSqr))
                 .orElse(null);
     }
 
     @Unique
-    private boolean ha$isValidGolemTarget(IronGolemEntity golem) {
+    private boolean ha$isValidGolemTarget(IronGolem golem) {
         return golem.isAlive()
                 && !golem.isRemoved()
                 && golem.getHealth() < golem.getMaxHealth()
@@ -275,19 +275,19 @@ public abstract class VillagerEntityMixin {
     }
 
     @Unique
-    private void ha$holdIronIngot(VillagerEntity armorer) {
-        ItemStack mainHand = armorer.getEquippedStack(EquipmentSlot.MAINHAND);
+    private void ha$holdIronIngot(Villager armorer) {
+        ItemStack mainHand = armorer.getItemBySlot(EquipmentSlot.MAINHAND);
 
-        if (!mainHand.isOf(Items.IRON_INGOT)) {
-            armorer.equipStack(EquipmentSlot.MAINHAND, new ItemStack(Items.IRON_INGOT));
-            armorer.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.0F);
+        if (!mainHand.is(Items.IRON_INGOT)) {
+            armorer.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.IRON_INGOT));
+            armorer.setDropChance(EquipmentSlot.MAINHAND, 0.0F);
         }
 
         ha$holdingIronIngot = true;
     }
 
     @Unique
-    private void ha$cancelRepair(VillagerEntity armorer) {
+    private void ha$cancelRepair(Villager armorer) {
         boolean wasRepairing = ha$targetGolemUuid != null || ha$holdingIronIngot;
 
         ha$targetGolemUuid = null;
@@ -296,18 +296,18 @@ public abstract class VillagerEntityMixin {
             armorer.getNavigation().stop();
         }
 
-        if (ha$holdingIronIngot || armorer.getEquippedStack(EquipmentSlot.MAINHAND).isOf(Items.IRON_INGOT)) {
-            armorer.equipStack(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+        if (ha$holdingIronIngot || armorer.getItemBySlot(EquipmentSlot.MAINHAND).is(Items.IRON_INGOT)) {
+            armorer.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
             ha$holdingIronIngot = false;
         }
     }
 
     @Unique
-    private void ha$clearOnlyHelpfulArmorerState(VillagerEntity armorer) {
+    private void ha$clearOnlyHelpfulArmorerState(Villager armorer) {
         ha$targetGolemUuid = null;
 
         if (ha$holdingIronIngot) {
-            armorer.equipStack(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+            armorer.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
             ha$holdingIronIngot = false;
         }
     }
