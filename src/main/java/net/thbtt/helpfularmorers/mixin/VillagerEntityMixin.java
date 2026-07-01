@@ -1,5 +1,7 @@
 package net.thbtt.helpfularmorers.mixin;
 
+import net.thbtt.helpfularmorers.compat.ProfessionCompat;
+import net.thbtt.helpfularmorers.compat.WorldCompat;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.mob.HostileEntity;

@@ -1,5 +1,7 @@
 package net.thbtt.helpfularmorers.mixin;
 
+import net.thbtt.helpfularmorers.compat.ProfessionCompat;
+import net.thbtt.helpfularmorers.compat.WorldCompat;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;

@@ -30,7 +30,7 @@ If hostile mobs are nearby, if it is night, or if the armorer takes damage, the 
 
 ## Compatibility
 
-* Minecraft: **1.21.1 through 1.21.11 and 26.1 through 26.1.2**
+* Minecraft: **1.21.1 through 1.21.11 and 26.1 through 26.2**
 * Mod loader: **Fabric**
 * Environment: **Client and Server**
 

@@ -1,13 +1,13 @@
-package net.thbtt.helpfularmorers.mixin;
+package net.thbtt.helpfularmorers.compat;
 
 import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.npc.villager.VillagerProfession;
 
-final class ProfessionCompat {
+public final class ProfessionCompat {
     private ProfessionCompat() {
     }
 
-    static boolean isArmorer(Villager villager) {
+    public static boolean isArmorer(Villager villager) {
         return villager.getVillagerData().profession().is(VillagerProfession.ARMORER);
     }
 }

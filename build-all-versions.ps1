@@ -5,6 +5,7 @@ $output = Join-Path $root "jars"
 $gradle = Join-Path $root "gradlew.bat"
 $java21Home = $env:JAVA_HOME
 $bundledJava25 = Join-Path $root "..\..\jbr"
+$modVersion = "1.2.0"
 
 $targets21 = @(
     @{ Version = "1.21.1"; Yarn = "1.21.1+build.3"; Api = "0.116.12+1.21.1"; Variant = "legacy" },
@@ -23,7 +24,8 @@ $targets21 = @(
 $targets26 = @(
     @{ Version = "26.1"; Api = "0.145.1+26.1" },
     @{ Version = "26.1.1"; Api = "0.145.4+26.1.1" },
-    @{ Version = "26.1.2"; Api = "0.152.1+26.1.2" }
+    @{ Version = "26.1.2"; Api = "0.152.1+26.1.2" },
+    @{ Version = "26.2"; Api = "0.153.0+26.2" }
 )
 
 function Copy-ModJar {
@@ -36,7 +38,7 @@ function Copy-ModJar {
         Where-Object { $_.Name -notlike "*-sources.jar" } |
         Select-Object -First 1
 
-    Copy-Item -LiteralPath $jar.FullName -Destination (Join-Path $output "helpfularmorers-$Version-1.0.0.jar")
+    Copy-Item -LiteralPath $jar.FullName -Destination (Join-Path $output "helpfularmorers-$Version-$modVersion.jar")
 }
 
 New-Item -ItemType Directory -Force -Path $output | Out-Null
