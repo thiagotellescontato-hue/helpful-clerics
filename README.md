@@ -1,32 +1,31 @@
-# Helpful Armorers
+# Helpful Clerics
 
-Helpful Armorers is a Minecraft Fabric mod that gives armorer villagers a new useful behavior: they can repair damaged iron golems.
+Helpful Clerics is a Minecraft Fabric mod that gives cleric villagers a useful support behavior: they can heal damaged villagers.
 
-When an armorer finds a nearby injured iron golem, it will approach the golem while holding an iron ingot and repair it. Armorers are careful, though — they will avoid repairing during dangerous situations, at night, or after taking damage.
-
-## Preview
-
-![Villager healing iron golem](https://cdn.modrinth.com/data/cached_images/d92f87ddc8a395b37ef73ea99eb2dcd64da507a7.gif)
+When a cleric finds a nearby injured villager, it approaches while holding a healing potion and applies Instant Healing. Clerics avoid healing during dangerous situations, at night, or after taking damage.
 
 ## Features
 
-| Feature              | Description                                                       |
-| -------------------- | ----------------------------------------------------------------- |
-| Iron Golem Repair    | Armorer villagers can repair nearby damaged iron golems.          |
-| Iron Ingot Animation | Armorers hold an iron ingot while going to repair a golem.        |
-| Danger Awareness     | Armorers avoid repairing when hostile mobs are nearby.            |
-| Self-Preservation    | Armorers stop repairing after taking damage.                      |
-| Night Safety         | Armorers do not risk repairing golems at night.                   |
-| Vanilla-Friendly     | Keeps the behavior simple and close to vanilla Minecraft.         |
-| Lightweight          | Focused only on improving the armorer and iron golem interaction. |
+| Feature                  | Description                                                  |
+| ------------------------ | ------------------------------------------------------------ |
+| Villager Healing         | Cleric villagers can heal nearby damaged villagers.          |
+| Healing Potion Animation | Clerics hold a potion while going to heal a villager.        |
+| Potion Sound             | Healing uses a potion drinking sound.                        |
+| Danger Awareness         | Clerics avoid healing when hostile mobs are nearby.          |
+| Self-Preservation        | Clerics stop healing and flee after taking damage.           |
+| Night Safety             | Clerics do not risk healing villagers at night.              |
+| Vanilla-Friendly         | Keeps the behavior simple and close to vanilla Minecraft.    |
+| Lightweight              | Focused only on improving cleric and villager interaction.   |
 
 ## How It Works
 
-If there is a damaged iron golem nearby, the armorer will try to approach it.
+If there is a damaged villager nearby, a cleric will try to approach it.
 
-The armorer will hold an iron ingot and repair the golem when close enough.
+The cleric holds a healing potion and applies Instant Healing when close enough.
 
-If hostile mobs are nearby, if it is night, or if the armorer takes damage, the repair behavior is cancelled.
+If hostile mobs are nearby, if it is night, or if the cleric takes damage, the healing behavior is cancelled.
+
+Iron golems are not healed by this mod.
 
 ## Compatibility
 

@@ -16,7 +16,7 @@ if (-not $env:MODRINTH_TOKEN) {
     throw "Set MODRINTH_TOKEN before running this script."
 }
 
-$jar = Join-Path $PSScriptRoot "jars\helpfularmorers-$MinecraftVersion-$ModVersion.jar"
+$jar = Join-Path $PSScriptRoot "jars\helpfulclerics-$MinecraftVersion-$ModVersion.jar"
 if (-not (Test-Path -LiteralPath $jar)) {
     throw "Jar not found: $jar"
 }
@@ -24,9 +24,9 @@ if (-not (Test-Path -LiteralPath $jar)) {
 $filePart = "mod-file"
 $versionNumber = "$ModVersion+mc$MinecraftVersion"
 $data = @{
-    name = "Helpful Armorers $ModVersion for Minecraft $MinecraftVersion"
+    name = "Helpful Clerics $ModVersion for Minecraft $MinecraftVersion"
     version_number = $versionNumber
-    changelog = "Helpful Armorers $ModVersion for Minecraft $MinecraftVersion."
+    changelog = "Helpful Clerics $ModVersion for Minecraft $MinecraftVersion."
     dependencies = @(
         @{
             project_id = "P7dR8mSH"
@@ -43,8 +43,8 @@ $data = @{
     primary_file = $filePart
 } | ConvertTo-Json -Depth 5 -Compress
 
-$tempData = Join-Path ([System.IO.Path]::GetTempPath()) "helpfularmorers-modrinth-$([guid]::NewGuid()).json"
-$tempResponse = Join-Path ([System.IO.Path]::GetTempPath()) "helpfularmorers-modrinth-$([guid]::NewGuid()).response"
+$tempData = Join-Path ([System.IO.Path]::GetTempPath()) "helpfulclerics-modrinth-$([guid]::NewGuid()).json"
+$tempResponse = Join-Path ([System.IO.Path]::GetTempPath()) "helpfulclerics-modrinth-$([guid]::NewGuid()).response"
 
 try {
     [System.IO.File]::WriteAllText($tempData, $data, [System.Text.UTF8Encoding]::new($false))
@@ -54,7 +54,7 @@ try {
         --write-out "%{http_code}" `
         --request POST "https://api.modrinth.com/v2/version" `
         --header "Authorization: $env:MODRINTH_TOKEN" `
-        --header "User-Agent: thiagotellescontato-hue/helpful-armorers" `
+        --header "User-Agent: thiagotellescontato-hue/helpful-clerics" `
         --form "data=@${tempData};type=application/json" `
         --form "${filePart}=@${jar};type=application/java-archive"
 
@@ -75,4 +75,4 @@ try {
 }
 
 $result = $response | ConvertFrom-Json
-Write-Host "Published $($result.version_number): https://modrinth.com/mod/helpful-armorers/version/$($result.id)"
+Write-Host "Published $($result.version_number): https://modrinth.com/mod/helpful-clerics/version/$($result.id)"

@@ -31,9 +31,9 @@ java {
 }
 
 jar {
-	archiveBaseName = "helpfularmorers-${project.minecraft_version}"
+	archiveBaseName = "helpfulclerics-${project.minecraft_version}"
 
 	from("../LICENSE") {
-		rename { "${it}_helpfularmorers" }
+		rename { "${it}_helpfulclerics" }
 	}
 }

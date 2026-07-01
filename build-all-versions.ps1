@@ -38,7 +38,7 @@ function Copy-ModJar {
         Where-Object { $_.Name -notlike "*-sources.jar" } |
         Select-Object -First 1
 
-    Copy-Item -LiteralPath $jar.FullName -Destination (Join-Path $output "helpfularmorers-$Version-$modVersion.jar")
+    Copy-Item -LiteralPath $jar.FullName -Destination (Join-Path $output "helpfulclerics-$Version-$modVersion.jar")
 }
 
 New-Item -ItemType Directory -Force -Path $output | Out-Null

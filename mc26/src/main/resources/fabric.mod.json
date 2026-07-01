@@ -1,20 +1,20 @@
 {
 	"schemaVersion": 1,
-	"id": "helpfularmorers",
+	"id": "helpfulclerics",
 	"version": "${version}",
-	"name": "Helpful Armorers",
-	"description": "Armorers help repair damaged iron golems when it is safe to do so.",
+	"name": "Helpful Clerics",
+	"description": "Clerics heal damaged villagers when it is safe to do so.",
 	"authors": ["Thiago"],
 	"contact": {
-		"sources": "https://github.com/thiagotellescontato-hue/helpful-armorers"
+		"sources": "https://github.com/thiagotellescontato-hue/helpful-clerics"
 	},
 	"license": "MIT",
-	"icon": "assets/helpfularmorers/icon.png",
+	"icon": "assets/helpfulclerics/icon.png",
 	"environment": "*",
 	"entrypoints": {
-		"main": ["net.thbtt.helpfularmorers.HelpfulArmorers"]
+		"main": ["net.thbtt.helpfulclerics.HelpfulClerics"]
 	},
-	"mixins": ["helpfularmorers.mixins.json"],
+	"mixins": ["helpfulclerics.mixins.json"],
 	"depends": {
 		"fabricloader": "*",
 		"minecraft": "${minecraft_version}",

@@ -1,0 +1,9 @@
+{
+	"required": true,
+	"package": "net.thbtt.helpfulclerics.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"mixins": ["VillagerEntityMixin"],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
