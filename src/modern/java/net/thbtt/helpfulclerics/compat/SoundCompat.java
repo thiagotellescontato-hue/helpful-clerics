@@ -10,6 +10,6 @@ public final class SoundCompat {
     }
 
     public static void playHealingSound(ServerWorld world, BlockPos pos) {
-        world.playSound(null, pos, SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE.value(), SoundCategory.NEUTRAL, 0.65F, 1.35F);
+        world.playSound(null, pos, SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE, SoundCategory.NEUTRAL, 0.65F, 1.35F);
     }
 }

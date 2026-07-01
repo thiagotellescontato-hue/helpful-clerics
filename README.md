@@ -22,47 +22,32 @@ When a cleric finds a nearby injured villager, it approaches while holding a hea
 
 ## How It Works
 
-If there is a damaged villager nearby, a cleric will try to approach it.
+Clerics act like village support units.
 
-The cleric prioritizes the most injured visible villager first. It refreshes its search every 5 seconds so newly injured villagers are picked up while it is already helping others.
+When a villager gets hurt, it runs toward the nearest cleric instead of fleeing randomly. If no cleric is nearby, vanilla behavior is left unchanged.
 
-When it can reach and see the patient, it holds a healing potion and applies Instant Healing directly.
+The cleric looks for visible injured villagers, prioritizes the most injured one, walks to it, holds an Instant Healing potion, and heals it directly.
 
-If two or more visible injured villagers are close to a cleric, it throws a splash Instant Healing potion at the most injured one.
+If multiple injured villagers are close together, or if the target is visible but unreachable, the cleric throws a splash Instant Healing potion instead.
 
-If the selected injured villager is visible but unreachable, the cleric also throws a splash Instant Healing potion at that villager as a fallback.
+Healing creates happy villager particles and plays a magic sound. After being healed, villagers return to normal vanilla AI unless there is still danger nearby.
 
-When healing happens, happy villager particles appear around the healed villager and a magic sound is played.
-
-If a villager is hurt, it runs directly toward the nearest cleric. Once healed, this mod stops controlling its movement so vanilla villager AI can resume its normal task.
-
-If no cleric is available, injured villagers keep their normal vanilla behavior.
-
-If a cleric is hurt, it prioritizes healing itself before healing other villagers.
-
-Outside raids, if hostile mobs are nearby or if it is night, the healing behavior is cancelled.
-
-During a raid, clerics ignore the night/rest restriction and constantly scan for injured villagers. They still prioritize their own health before helping anyone else.
-
-If raiders are too close during a raid, clerics do not walk toward distant patients. They only heal villagers already within reach or throw splash healing from their current position if the patient is visible.
+Clerics are not reckless. Outside raids, they avoid healing at night or near hostile mobs. During raids, they keep searching for injured villagers, but still heal themselves first and avoid walking into obvious danger.
 
 ## Behavior Details
 
-* Search radius: **16 blocks**
-* Heal range: **2.4 blocks**
-* Group splash radius: **4 blocks**
-* Group splash threshold: **2 visible injured villagers**
-* Injured villager seek range: **16 blocks**
-* Patient detection: **requires line of sight**
-* Patient priority: **lowest visible health percentage first**
-* Forced patient refresh: **every 5 seconds**
-* Raid patient refresh: **constant while a raid is active**
-* Cleric self-heal delay: **1 second**
-* Heal cooldown: **3 seconds**
-* Direct healing: **requires line of sight**
-* Splash potion: **used for 2+ nearby visible injured villagers, or when the selected visible patient cannot be reached**
-* Raid behavior: **ignores night/rest, self-heals first, and avoids walking toward danger**
-* No cleric nearby: **injured villagers keep vanilla behavior**
+| Setting                 | Value                                      |
+| ----------------------- | ------------------------------------------ |
+| Search radius           | **16 blocks**                              |
+| Heal range              | **2.4 blocks**                             |
+| Injured villager range  | **16 blocks**                              |
+| Group splash trigger    | **2 visible injured villagers**            |
+| Group splash radius     | **4 blocks**                               |
+| Patient priority        | **Most injured visible villager first**    |
+| Patient refresh         | **Every 5 seconds, constant during raids** |
+| Cleric self-heal delay  | **1 second**                               |
+| Heal cooldown           | **3 seconds**                              |
+| Visibility rule         | **Healing requires line of sight**         |
 
 ## Compatibility
 

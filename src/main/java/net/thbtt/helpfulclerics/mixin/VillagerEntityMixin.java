@@ -2,8 +2,10 @@ package net.thbtt.helpfulclerics.mixin;
 
 import net.thbtt.helpfulclerics.compat.ProfessionCompat;
 import net.thbtt.helpfulclerics.compat.SoundCompat;
+import net.thbtt.helpfulclerics.compat.SplashPotionCompat;
 import net.thbtt.helpfulclerics.compat.WorldCompat;
 import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.component.type.PotionContentsComponent;
 import net.minecraft.entity.passive.VillagerEntity;
@@ -13,10 +15,12 @@ import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.potion.Potions;
-import net.minecraft.entity.projectile.thrown.PotionEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
+import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.village.raid.Raid;
+import net.minecraft.world.RaycastContext;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -109,6 +113,7 @@ public abstract class VillagerEntityMixin {
             if (cleric.getHealth() >= cleric.getMaxHealth()) {
                 hc$cancelHealing(cleric);
                 hc$selfHealDelay = 0;
+                hc$finishHealingMovement(world, cleric);
             }
             return;
         }
@@ -146,13 +151,13 @@ public abstract class VillagerEntityMixin {
 
         hc$holdHealingPotion(cleric);
 
-        if (distanceSq > healDistanceSq || !cleric.canSee(patient)) {
+        if (distanceSq > healDistanceSq || !hc$canSeePatient(world, cleric, patient)) {
             cleric.getLookControl().lookAt(patient, 30.0F, 30.0F);
 
             if (raidActive && hc$dangerNearby) {
                 cleric.getNavigation().stop();
 
-                if (cleric.canSee(patient) && hc$healCooldown <= 0) {
+                if (hc$canSeePatient(world, cleric, patient) && hc$healCooldown <= 0) {
                     hc$holdSplashHealingPotion(cleric);
                     hc$splashHealVillager(world, cleric, patient);
                     hc$cancelHealing(cleric);
@@ -163,7 +168,7 @@ public abstract class VillagerEntityMixin {
 
             boolean canReachPatient = cleric.getNavigation().startMovingTo(patient, 0.65D);
 
-            if (!canReachPatient && hc$healCooldown <= 0) {
+            if (!canReachPatient && hc$canSeePatient(world, cleric, patient) && hc$healCooldown <= 0) {
                 hc$holdSplashHealingPotion(cleric);
                 hc$splashHealVillager(world, cleric, patient);
                 hc$cancelHealing(cleric);
@@ -179,6 +184,7 @@ public abstract class VillagerEntityMixin {
             hc$healVillager(world, cleric, patient);
 
             if (patient.getHealth() >= patient.getMaxHealth()) {
+                hc$finishHealingMovement(world, patient);
                 hc$cancelHealing(cleric);
             }
         }
@@ -193,6 +199,11 @@ public abstract class VillagerEntityMixin {
     private void hc$tickPatientSeeking(ServerWorld world, VillagerEntity patient) {
         if (patient.isBaby()) {
             hc$seekingCleric = false;
+            return;
+        }
+
+        if (hc$seekingCleric && patient.getHealth() >= patient.getMaxHealth()) {
+            hc$finishHealingMovement(world, patient);
             return;
         }
 
@@ -293,7 +304,7 @@ public abstract class VillagerEntityMixin {
         List<VillagerEntity> villagers = world.getEntitiesByClass(
                 VillagerEntity.class,
                 cleric.getBoundingBox().expand(HC_SEARCH_RADIUS),
-                villager -> hc$isValidPatient(villager, cleric)
+                villager -> hc$isValidPatient(villager, cleric) && hc$canSeePatient(world, cleric, villager)
         );
 
         return villagers.stream()
@@ -319,7 +330,7 @@ public abstract class VillagerEntityMixin {
         return world.getEntitiesByClass(
                 VillagerEntity.class,
                 cleric.getBoundingBox().expand(HC_GROUP_HEAL_RADIUS),
-                villager -> hc$isValidPatient(villager, cleric)
+                villager -> hc$isValidPatient(villager, cleric) && hc$canSeePatient(world, cleric, villager)
         );
     }
 
@@ -360,8 +371,29 @@ public abstract class VillagerEntityMixin {
         return villager.isAlive()
                 && !villager.isRemoved()
                 && !villager.getUuid().equals(cleric.getUuid())
-                && villager.getHealth() < villager.getMaxHealth()
-                && cleric.canSee(villager);
+                && villager.getHealth() < villager.getMaxHealth();
+    }
+
+    @Unique
+    private boolean hc$canSeePatient(ServerWorld world, VillagerEntity cleric, VillagerEntity patient) {
+        Vec3d from = cleric.getEyePos();
+
+        return hc$hasClearRay(world, from, patient.getEyePos(), cleric)
+                || hc$hasClearRay(world, from, new Vec3d(patient.getX(), patient.getBodyY(0.5D), patient.getZ()), cleric)
+                || hc$hasClearRay(world, from, new Vec3d(patient.getX(), patient.getY() + 0.2D, patient.getZ()), cleric);
+    }
+
+    @Unique
+    private boolean hc$hasClearRay(ServerWorld world, Vec3d from, Vec3d to, VillagerEntity cleric) {
+        HitResult hit = world.raycast(new RaycastContext(
+                from,
+                to,
+                RaycastContext.ShapeType.COLLIDER,
+                RaycastContext.FluidHandling.NONE,
+                cleric
+        ));
+
+        return hit.getType() == HitResult.Type.MISS;
     }
 
     @Unique
@@ -378,6 +410,27 @@ public abstract class VillagerEntityMixin {
     }
 
     @Unique
+    private void hc$finishHealingMovement(ServerWorld world, VillagerEntity patient) {
+        if (!hc$isThreatNearby(world, patient)) {
+            hc$clearPanicMemories(patient);
+            patient.getNavigation().stop();
+        }
+        hc$seekingCleric = false;
+    }
+
+    @Unique
+    private void hc$clearPanicMemories(VillagerEntity patient) {
+        patient.getBrain().forget(MemoryModuleType.WALK_TARGET);
+        patient.getBrain().forget(MemoryModuleType.LOOK_TARGET);
+        patient.getBrain().forget(MemoryModuleType.HURT_BY);
+        patient.getBrain().forget(MemoryModuleType.HURT_BY_ENTITY);
+        patient.getBrain().forget(MemoryModuleType.AVOID_TARGET);
+        patient.getBrain().forget(MemoryModuleType.NEAREST_HOSTILE);
+        patient.getBrain().forget(MemoryModuleType.DANGER_DETECTED_RECENTLY);
+        patient.getBrain().forget(MemoryModuleType.IS_PANICKING);
+    }
+
+    @Unique
     private void hc$splashHealVillager(ServerWorld world, VillagerEntity cleric, VillagerEntity target) {
         if (hc$healCooldown > 0) {
             return;
@@ -385,18 +438,10 @@ public abstract class VillagerEntityMixin {
 
         cleric.getLookControl().lookAt(target, 30.0F, 30.0F);
         cleric.swingHand(Hand.MAIN_HAND);
-        PotionEntity potion = new PotionEntity(world, cleric);
-        potion.setItem(PotionContentsComponent.createStack(Items.SPLASH_POTION, Potions.HEALING));
 
-        double deltaX = target.getX() - cleric.getX();
-        double deltaY = target.getBodyY(0.5D) - potion.getY();
-        double deltaZ = target.getZ() - cleric.getZ();
-        double horizontalDistance = Math.sqrt(deltaX * deltaX + deltaZ * deltaZ);
-
-        potion.setVelocity(deltaX, deltaY + horizontalDistance * 0.2D, deltaZ, 0.75F, 8.0F);
-        world.spawnEntity(potion);
-
-        hc$healCooldown = 60;
+        if (SplashPotionCompat.throwHealingSplash(world, cleric, target)) {
+            hc$healCooldown = 60;
+        }
     }
 
     @Unique
@@ -416,24 +461,16 @@ public abstract class VillagerEntityMixin {
 
     @Unique
     private void hc$holdHealingPotion(VillagerEntity cleric) {
-        ItemStack mainHand = cleric.getEquippedStack(EquipmentSlot.MAINHAND);
-
-        if (!mainHand.isOf(Items.POTION)) {
-            cleric.equipStack(EquipmentSlot.MAINHAND, PotionContentsComponent.createStack(Items.POTION, Potions.HEALING));
-            cleric.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.0F);
-        }
+        cleric.equipStack(EquipmentSlot.MAINHAND, PotionContentsComponent.createStack(Items.POTION, Potions.HEALING));
+        cleric.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.0F);
 
         hc$holdingHealingPotion = true;
     }
 
     @Unique
     private void hc$holdSplashHealingPotion(VillagerEntity cleric) {
-        ItemStack mainHand = cleric.getEquippedStack(EquipmentSlot.MAINHAND);
-
-        if (!mainHand.isOf(Items.SPLASH_POTION)) {
-            cleric.equipStack(EquipmentSlot.MAINHAND, PotionContentsComponent.createStack(Items.SPLASH_POTION, Potions.HEALING));
-            cleric.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.0F);
-        }
+        cleric.equipStack(EquipmentSlot.MAINHAND, PotionContentsComponent.createStack(Items.SPLASH_POTION, Potions.HEALING));
+        cleric.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.0F);
 
         hc$holdingHealingPotion = true;
     }
